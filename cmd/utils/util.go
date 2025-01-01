@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
+
+	"github.com/go-playground/validator/v10"
 )
+
+var Validate = validator.New()
 
 func ParseJSON(r *http.Request, payload any) error {
 
-	if r.Header.Get("Content-Type") != "application/json" {
-		return fmt.Errorf("request body must be json")
-	}
 	if r.Body == nil {
 		return fmt.Errorf("request body is empty")
 	}
@@ -28,4 +30,17 @@ func WriteErrorResponse(w http.ResponseWriter, status int, err error) {
 	WriteJSON(w, status, map[string]string{
 		"error": err.Error(),
 	})
+}
+
+
+func PrintStructFields(s interface{}) {
+	t := reflect.TypeOf(s)
+	val := reflect.ValueOf(s)
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		value := val.Field(i)
+
+		fmt.Printf("%s: %v\n", field.Name, value.Interface())
+	}
 }
