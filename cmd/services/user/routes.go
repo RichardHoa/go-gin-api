@@ -62,11 +62,11 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := map[string]string{
-		"token": tokenString,
-	}
+	w.Header().Set("Authorization", "Bearer "+tokenString)
 
-	utils.WriteJSONResponse(w, http.StatusOK, token)
+	utils.WriteJSONResponse(w, http.StatusOK, map[string]string{
+		"message": "login success",
+	})
 
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -69,4 +70,24 @@ func CreateFriendlyErrorMSG(err error) map[string]string {
 
 	return friendlyErrors
 
+}
+
+
+func ExtractBearerToken(r *http.Request) (string, error) {
+	// Get the Authorization header
+	authHeader := r.Header.Get("Authorization")
+
+	// Check if the Authorization header is in the correct format
+	if authHeader == "" {
+		return "", fmt.Errorf("authorization header is missing")
+	}
+
+	// Split the header value into "Bearer <token>"
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return "", fmt.Errorf("authorization header format must be Bearer <token>")
+	}
+
+	// Return the token
+	return parts[1], nil
 }

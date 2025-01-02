@@ -17,16 +17,16 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (s *Store) GetProducts() ([]types.Product, error) {
-	
+
 	rows, err := s.db.Query("SELECT * FROM products")
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
-	
+
 	products := make([]types.Product, 0)
-	
+
 	for rows.Next() {
 		var product types.Product
 		if err := rows.Scan(
@@ -49,5 +49,20 @@ func (s *Store) GetProducts() ([]types.Product, error) {
 
 	}
 	return products, nil
+
+}
+
+func (s *Store) CreateProduct(product types.Product) error {
+
+	_, err := s.db.Exec(
+		"INSERT INTO products (name, description, image, price, quantity) VALUES (?, ?, ?, ?, ?)",
+		product.Name,
+		product.Description,
+		product.Image,
+		product.Price,
+		product.Quantity,
+	)
+
+	return err
 
 }

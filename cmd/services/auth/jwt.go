@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/RichardHoa/go-gin-api/cmd/config"
@@ -21,5 +22,28 @@ func GenerateJWT(secret []byte, userID int) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+
+}
+
+func VerifyandGetClaimJWT(tokenString string) (jwt.MapClaims, error) {
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+	
+		return []byte(config.ENVs.JWTSecret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		return claims, nil
+	} else {
+		return nil, err
+	}
 
 }
