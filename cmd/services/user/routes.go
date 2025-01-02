@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/RichardHoa/go-gin-api/cmd/config"
 	"github.com/RichardHoa/go-gin-api/cmd/services/auth"
 	"github.com/RichardHoa/go-gin-api/cmd/types"
 	"github.com/RichardHoa/go-gin-api/cmd/utils"
@@ -28,6 +29,45 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
+	var payload types.UserLoginPayload
+
+	err := utils.ParseJSON(r, &payload)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("JSON format error: %s", err))
+		return
+	}
+
+	if err := utils.Validate.Struct(payload); err != nil {
+		friendlyErrors := utils.CreateFriendlyErrorMSG(err)
+		utils.WriteJSONResponse(w, http.StatusBadRequest, friendlyErrors)
+		return
+	}
+
+	user, getUserErr := h.store.GetUserByEmail(payload.Email)
+	if getUserErr != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("either the email or password is incorrect"))
+		return
+	}
+
+	if !auth.ComparePassword(user.Password, payload.Password) {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("either the email or password is incorrect"))
+		return
+	}
+
+	secret := []byte(config.ENVs.JWTSecret)
+
+	tokenString, createJWTErr := auth.GenerateJWT(secret, user.ID)
+	if createJWTErr != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, createJWTErr)
+		return
+	}
+
+	token := map[string]string{
+		"token": tokenString,
+	}
+
+	utils.WriteJSONResponse(w, http.StatusOK, token)
+
 }
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +76,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	err := utils.ParseJSON(r, &payload)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("error parsing JSON: %s", err))
+		utils.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("JSON format error: %s", err))
 		return
 	}
 
@@ -67,7 +107,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	createUserErr := h.store.CreateUser(user)
 
-	utils.DebuggingPrinting(user)
+	// utils.DebuggingPrinting(user)
 
 	if createUserErr != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("error creating user: %s", createUserErr))
