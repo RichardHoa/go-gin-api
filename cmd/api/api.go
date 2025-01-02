@@ -31,7 +31,7 @@ func (server *APIServer) Run() error {
 	userHandler.RegisterRoutes(subrouter)
 
 	productStore := product.NewStore(server.db)
-	productHandler := product.NewHandler(productStore)
+	productHandler := product.NewHandler(productStore, userStore)
 	productHandler.ProductRoutes(subrouter)
 
 	log.Println("Server is running on", server.address)

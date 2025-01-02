@@ -11,11 +11,15 @@ import (
 )
 
 type Handler struct {
-	store types.ProductStore
+	ProductStore types.ProductStore
+	UserStore    types.UserStore
 }
 
-func NewHandler(store types.ProductStore) *Handler {
-	return &Handler{store: store}
+func NewHandler(ProductStore types.ProductStore, UserStore types.UserStore) *Handler {
+	return &Handler{
+		ProductStore: ProductStore,
+		UserStore:    UserStore,
+	}
 }
 
 func (h *Handler) ProductRoutes(router *mux.Router) {
@@ -26,22 +30,20 @@ func (h *Handler) ProductRoutes(router *mux.Router) {
 
 func (h *Handler) HandleGetProducts(w http.ResponseWriter, r *http.Request) {
 
-	token, err := utils.ExtractBearerToken(r)
-	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusUnauthorized, err)
+	userID, getUserTokenErr := auth.AuthenticateUserToken(r)
+	if getUserTokenErr != nil {
+		utils.WriteErrorResponse(w, http.StatusUnauthorized, getUserTokenErr)
 		return
 	}
 
-	claims, err := auth.VerifyandGetClaimJWT(token)
-	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusUnauthorized, err)
+	_, getUserErr := h.UserStore.GetUserByID(userID)
+
+	if getUserErr != nil {
+		utils.WriteErrorResponse(w, http.StatusUnauthorized, getUserErr)
 		return
 	}
 
-	fmt.Println(claims["userID"])
-
-
-	products, err := h.store.GetProducts()
+	products, err := h.ProductStore.GetProducts()
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
@@ -52,6 +54,19 @@ func (h *Handler) HandleGetProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandlePostProducts(w http.ResponseWriter, r *http.Request) {
+
+	userID, getUserTokenErr := auth.AuthenticateUserToken(r)
+	if getUserTokenErr != nil {
+		utils.WriteErrorResponse(w, http.StatusUnauthorized, getUserTokenErr)
+		return
+	}
+
+	_, getUserErr := h.UserStore.GetUserByID(userID)
+
+	if getUserErr != nil {
+		utils.WriteErrorResponse(w, http.StatusUnauthorized, getUserErr)
+		return
+	}
 
 	var payload types.ProductCreatePayload
 
@@ -74,7 +89,7 @@ func (h *Handler) HandlePostProducts(w http.ResponseWriter, r *http.Request) {
 		Quantity:    payload.Quantity,
 	}
 
-	createProductErr := h.store.CreateProduct(product)
+	createProductErr := h.ProductStore.CreateProduct(product)
 	if createProductErr != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, createProductErr)
 		return
