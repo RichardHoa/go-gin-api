@@ -7,7 +7,8 @@ import (
 	"github.com/RichardHoa/go-gin-api/cmd/services/auth"
 	"github.com/RichardHoa/go-gin-api/cmd/types"
 	"github.com/RichardHoa/go-gin-api/cmd/utils"
-	"github.com/go-playground/validator/v10"
+
+	// "github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
@@ -35,12 +36,13 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	err := utils.ParseJSON(r, &payload)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("error parsing JSON: %s", err))
+		return
 	}
 
 	if err := utils.Validate.Struct(payload); err != nil {
-		errors := err.(validator.ValidationErrors)
-		utils.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		friendlyErrors := utils.CreateFriendlyErrorMSG(err)
+		utils.WriteJSONResponse(w, http.StatusBadRequest, friendlyErrors)
 		return
 	}
 
@@ -63,16 +65,16 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		Password:  hashedPassword,
 	}
 
-	// utils.PrintStructFields(user)
-
 	createUserErr := h.store.CreateUser(user)
 
+	utils.DebuggingPrinting(user)
+
 	if createUserErr != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, createUserErr)
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("error creating user: %s", createUserErr))
 		return
 	}
 
-	sendResErr := utils.WriteJSON(w, http.StatusCreated, map[string]string{
+	sendResErr := utils.WriteJSONResponse(w, http.StatusCreated, map[string]string{
 		"message": "New user has been created",
 	})
 
