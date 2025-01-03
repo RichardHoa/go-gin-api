@@ -25,7 +25,7 @@ var ENVs = initConfig()
 func initConfig() Config {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Error loading .env file")
+		log.Println("Error loading .env file, ignore when testing")
 	}
 	return Config{
 		PublicHost:             getEnv("PUBLIC_HOST", "localhost"),
