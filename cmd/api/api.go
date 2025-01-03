@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/RichardHoa/go-gin-api/cmd/services/cart"
+	"github.com/RichardHoa/go-gin-api/cmd/services/order"
 	"github.com/RichardHoa/go-gin-api/cmd/services/product"
 	"github.com/RichardHoa/go-gin-api/cmd/services/user"
 	"github.com/gorilla/mux"
@@ -33,6 +35,10 @@ func (server *APIServer) Run() error {
 	productStore := product.NewStore(server.db)
 	productHandler := product.NewHandler(productStore, userStore)
 	productHandler.ProductRoutes(subrouter)
+
+	orderStore := order.NewStore(server.db)
+	cartHandler := cart.NewHandler(orderStore, productStore, userStore)
+	cartHandler.CartRouter(subrouter)
 
 	log.Println("Server is running on", server.address)
 
