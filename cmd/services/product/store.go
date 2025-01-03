@@ -4,17 +4,20 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/RichardHoa/go-gin-api/cmd/types"
 )
 
 type Store struct {
 	db *sql.DB
+	mu *sync.Mutex
 }
 
 func NewStore(db *sql.DB) *Store {
 	return &Store{
 		db: db,
+		mu: &sync.Mutex{},
 	}
 }
 
@@ -112,6 +115,8 @@ func (s *Store) GetProductsByID(productIDs []int) ([]types.Product, error) {
 }
 
 func (s *Store) UpdateProduct(product types.Product) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	_, err := s.db.Exec(
 		"UPDATE products SET quantity = ? WHERE id = ?",
 		product.Quantity,
