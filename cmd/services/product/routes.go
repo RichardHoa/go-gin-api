@@ -23,8 +23,8 @@ func NewHandler(ProductStore types.ProductStore, UserStore types.UserStore) *Han
 }
 
 func (h *Handler) ProductRoutes(router *mux.Router) {
-	router.HandleFunc("/products", h.HandleGetProducts).Methods("GET")
-	router.HandleFunc("/products", h.HandlePostProducts).Methods("POST")
+	router.HandleFunc("/products", h.HandleGetProducts).Methods(http.MethodGet)
+	router.HandleFunc("/products", h.HandlePostProducts).Methods(http.MethodPost)
 
 }
 

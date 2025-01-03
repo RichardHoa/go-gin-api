@@ -24,8 +24,8 @@ func NewHandler(OrderStore types.OrderStore, ProductStore types.ProductStore, Us
 	}
 }
 
-func (h *Handler) CartRouter(router *mux.Router) {
-	router.HandleFunc("/cart/checkout", h.HandleCheckOut).Methods("POST")
+func (h *Handler) CartRoutes(router *mux.Router) {
+	router.HandleFunc("/cart/checkout", h.HandleCheckOut).Methods(http.MethodPost)
 
 }
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	// "fmt"
-	"database/sql"
 	"log"
 
 	"github.com/RichardHoa/go-gin-api/cmd/api"
@@ -13,7 +12,8 @@ import (
 
 func main() {
 
-	db, err := db.NewMySQLDB(mysql.Config{
+	// Create database
+	db, createSQLErr := db.NewMySQLDB(mysql.Config{
 		User:                 config.ENVs.DBUser,
 		Passwd:               config.ENVs.DBPassword,
 		Addr:                 config.ENVs.DBAddress,
@@ -22,28 +22,25 @@ func main() {
 		AllowNativePasswords: true,
 		ParseTime:            true,
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	dbErr := initDB(db)
-	if dbErr != nil {
-		log.Fatal(dbErr)
+	if createSQLErr != nil {
+		log.Fatal(createSQLErr)
 	}
 
-	server := api.NewAPIServer(":8080", db)
-	if err := server.Run(); err != nil {
-		log.Fatal(err)
-	}
-
-}
-
-func initDB(db *sql.DB) error {
-	err := db.Ping()
-	if err != nil {
-		return err
+	// Connect to database
+	connectDBErr := db.Ping()
+	if connectDBErr != nil {
+		log.Fatal(connectDBErr)
 	}
 	log.Println("Connected to database")
 
-	return nil
+	// Put DB connection to server
+	port := ":" + config.ENVs.Port
+	server := api.NewAPIServer(port, db)
+
+	// Run server
+	if serverRunErr := server.Run(); serverRunErr != nil {
+		log.Fatal(serverRunErr)
+	}
 
 }
+

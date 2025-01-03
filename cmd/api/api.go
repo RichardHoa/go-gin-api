@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/RichardHoa/go-gin-api/cmd/services/cart"
+	"github.com/RichardHoa/go-gin-api/cmd/services/health"
 	"github.com/RichardHoa/go-gin-api/cmd/services/order"
 	"github.com/RichardHoa/go-gin-api/cmd/services/product"
 	"github.com/RichardHoa/go-gin-api/cmd/services/user"
@@ -28,9 +29,11 @@ func (server *APIServer) Run() error {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
+	health.HealthRoutes(subrouter)
+
 	userStore := user.NewStore(server.db)
 	userHandler := user.NewHandler(userStore)
-	userHandler.RegisterRoutes(subrouter)
+	userHandler.UserRoutes(subrouter)
 
 	productStore := product.NewStore(server.db)
 	productHandler := product.NewHandler(productStore, userStore)
@@ -38,9 +41,9 @@ func (server *APIServer) Run() error {
 
 	orderStore := order.NewStore(server.db)
 	cartHandler := cart.NewHandler(orderStore, productStore, userStore)
-	cartHandler.CartRouter(subrouter)
+	cartHandler.CartRoutes(subrouter)
 
-	log.Println("Server is running on", server.address)
+	log.Println("Server is online at port", server.address)
 
 	return http.ListenAndServe(server.address, router)
 }
