@@ -1,7 +1,7 @@
 test:
 	@go test -v ./...
 
-i:
+get:
 	@go get ./...
 
 build:
