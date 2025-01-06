@@ -27,12 +27,18 @@ make get
 
 ---
 
-### 3. Run the app
+### 3. Database migration
+To run the app, you must have all the required tables, run this command to create all those tables
+```bash
+make migrate-up
+```
 
+---
+
+### 4. Run the app
 ```bash
 air
 ```
-
 
 ## Project Overview
 
